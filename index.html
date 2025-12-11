@@ -5,21 +5,20 @@
     <title>Heart Animation With Password</title>
 
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-            background: #000;
+        body { margin: 0; background: #000; overflow: hidden; }
+
+        /* CANVAS ở giữa màn hình */
+        #wrapper {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform-origin: center center;
         }
 
         canvas {
-            position: absolute;
             width: 100vw;
             height: 100vh;
             display: none;
-            touch-action: none;
         }
 
         /* BOX MẬT KHẨU */
@@ -64,23 +63,6 @@
             font-size: 17px;
             display: none;
         }
-
-        /* MOBILE RESPONSIVE */
-        @media (max-width: 600px) {
-            #loginBox {
-                width: 80%;
-                padding: 20px;
-            }
-
-            #loginBox input {
-                width: 150px;
-                font-size: 16px;
-            }
-
-            #loginBox h2 {
-                font-size: 32px !important;
-            }
-        }
     </style>
 
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
@@ -97,9 +79,32 @@
     <div id="wrongPass">Sai mật khẩu!</div>
 </div>
 
-<canvas id="heart"></canvas>
+<!-- WRAPPER để căn giữa canvas -->
+<div id="wrapper">
+    <canvas id="heart"></canvas>
+</div>
 
 <script>
+/* ================== AUTO SCALE MOBILE ================== */
+function autoScale() {
+    const wrap = document.getElementById("wrapper");
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    // scale theo mobile
+    let scale = 1;
+
+    if (w < 800) scale = 0.78;        // mobile screen
+    if (w < 500) scale = 0.70;        // màn cực nhỏ
+    if (h < 700) scale *= 0.90;
+
+    wrap.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+}
+
+window.addEventListener("resize", autoScale);
+autoScale();
+/* ====================================================== */
+
 const PASSWORD = "161227";
 
 function checkPass() {
@@ -110,12 +115,10 @@ function checkPass() {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("heart").style.display = "block";
         init();
-    } else {
-        wrong.style.display = "block";
-    }
+    } else wrong.style.display = "block";
 }
 
-/* LOAD ẢNH NHỎ */
+/* ========== LOAD ẢNH ========== */
 const smallImgs = [];
 for (let i = 1; i <= 10; i++) {
     const img = new Image();
@@ -127,117 +130,113 @@ let bigImg = smallImgs[0];
 let bigReady = false;
 
 let loadedCount = 0;
-smallImgs.forEach(img=>{
-    img.onload = ()=>{
+smallImgs.forEach(img => {
+    img.onload = () => {
         loadedCount++;
         if (loadedCount === smallImgs.length) bigReady = true;
     };
 });
 
-/* ĐỔI ẢNH LỚN MỖI 2 GIÂY */
-setInterval(()=>{
-    bigImg = smallImgs[Math.floor(Math.random()*smallImgs.length)];
+setInterval(() => {
+    bigImg = smallImgs[Math.floor(Math.random() * smallImgs.length)];
 }, 2000);
 
-/* REQUEST ANIMATION */
+/* ========== ANIMATION ========== */
 window.requestAnimationFrame =
 window.requestAnimationFrame ||
-function(cb){ return setTimeout(cb, 33); };
+function (cb) { return setTimeout(cb, 33); };
 
 let loaded = false;
 
-/* ========== KHỞI TẠO ========== */
-function init(){
+function init() {
     if (loaded) return;
     loaded = true;
 
     const canvas = document.getElementById("heart");
-    window.ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
-    function resizeCanvas() {
-        const ratio = window.devicePixelRatio || 1;
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
 
-        canvas.width = innerWidth * ratio;
-        canvas.height = innerHeight * ratio;
+    let W = canvas.width;
+    let H = canvas.height;
 
-        canvas.style.width = innerWidth + "px";
-        canvas.style.height = innerHeight + "px";
+    window.onresize = () => {
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+        W = canvas.width;
+        H = canvas.height;
+        autoScale();
+    };
 
-        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-        window.W = innerWidth;
-        window.H = innerHeight;
-    }
-
-    window.onresize = resizeCanvas;
-    resizeCanvas();
-
-    /* ========== HEART MATH ========== */
     function heart(rad) {
         return [
-            Math.pow(Math.sin(rad),3),
-            -(15*Math.cos(rad)-5*Math.cos(2*rad)-2*Math.cos(3*rad)-Math.cos(4*rad))
+            Math.pow(Math.sin(rad), 3),
+            -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))
         ];
     }
 
-    function scale(p, sx, sy, dx, dy){
-        return [ dx + p[0]*sx, dy + p[1]*sy ];
+    function scale(p, sx, sy, dx, dy) {
+        return [dx + p[0] * sx, dy + p[1] * sy];
     }
 
     let pts = [];
-    for(let r=0; r<Math.PI*2; r+=0.1)
+
+    // 3 vòng điểm
+    for (let r = 0; r < Math.PI * 2; r += 0.1)
         pts.push(scale(heart(r), 210, 15, 0, 0));
-    for(let r=0; r<Math.PI*2; r+=0.1)
+
+    for (let r = 0; r < Math.PI * 2; r += 0.1)
         pts.push(scale(heart(r), 150, 10, 0, 0));
-    for(let r=0; r<Math.PI*2; r+=0.1)
+
+    for (let r = 0; r < Math.PI * 2; r += 0.1)
         pts.push(scale(heart(r), 90, 6, 0, 0));
 
     let N = pts.length;
     let target = [];
 
-    function pulse(kx,ky){
-        for (let i=0;i<N;i++){
+    function pulse(kx, ky) {
+        for (let i = 0; i < N; i++) {
             target[i] = [
-                pts[i][0]*kx + W/2,
-                pts[i][1]*ky + H/2
+                pts[i][0] * kx + W / 2,
+                pts[i][1] * ky + H / 2
             ];
         }
     }
 
-    /* ========== PARTICLES ========== */
     let particles = [];
 
-    for(let i=0;i<N;i++){
-        let x = Math.random()*W;
-        let y = Math.random()*H;
+    for (let i = 0; i < N; i++) {
+        let x = Math.random() * W;
+        let y = Math.random() * H;
 
         let t = [];
-        for(let k=0;k<40;k++) t.push({x:x, y:y});
+        for (let k = 0; k < 40; k++) t.push({ x: x, y: y });
 
         particles[i] = {
-            vx:0, vy:0,
-            speed: Math.random()*1+5,
-            q: Math.floor(Math.random()*N),
-            D: Math.random()<0.5 ? -1 : 1,
-            force: 0.7 + Math.random()*0.3,
-            trace:t,
-            img: smallImgs[Math.floor(Math.random()*smallImgs.length)]
+            vx: 0, vy: 0,
+            speed: Math.random() * 1 + 5,
+            q: Math.floor(Math.random() * N),
+            D: Math.random() < 0.5 ? -1 : 1,
+            force: 0.7 + Math.random() * 0.3,
+            trace: t,
+            img: smallImgs[Math.floor(Math.random() * smallImgs.length)]
         };
     }
 
     function heartPath(ctx, cx, cy, size) {
         ctx.beginPath();
         const steps = 200;
-        for (let i=0; i<=steps; i++) {
-            let t = (Math.PI * 2)*(i/steps);
-            let x = 16*Math.pow(Math.sin(t),3);
-            let y = -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+        for (let i = 0; i <= steps; i++) {
+            let t = (Math.PI * 2) * (i / steps);
+            let x = 16 * Math.pow(Math.sin(t), 3);
+            let y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
 
-            x = cx + x*(size/17);
-            y = cy + y*(size/17);
+            x = cx + x * (size / 17);
+            y = cy + y * (size / 17);
 
-            if (i===0) ctx.moveTo(x,y);
-            else ctx.lineTo(x,y);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
         }
         ctx.closePath();
     }
@@ -245,35 +244,34 @@ function init(){
     let opacityBig = 0;
     let time = 0;
 
-    /* ========== LOOP ========== */
-    function loop(){
-
+    /* ================== LOOP ================== */
+    function loop() {
         time += 0.01;
-        let K = (1 - Math.cos(time))*0.5;
-        pulse(K,K);
+        let K = (1 - Math.cos(time)) * 0.5;
+        pulse(K, K);
 
         ctx.fillStyle = "rgba(0,0,0,0.15)";
-        ctx.fillRect(0,0,W,H);
+        ctx.fillRect(0, 0, W, H);
 
-        /* PARTICLES */
-        for(let i=0;i<N;i++){
+        // Hạt bay
+        for (let i = 0; i < N; i++) {
             let p = particles[i];
             let tg = target[p.q];
 
             let dx = p.trace[0].x - tg[0];
             let dy = p.trace[0].y - tg[1];
-            let dist = Math.sqrt(dx*dx+dy*dy)+0.001;
+            let dist = Math.sqrt(dx * dx + dy * dy) + 0.001;
 
-            if (dist < 20){
-                if (Math.random()>0.95) p.q = Math.floor(Math.random()*N);
+            if (dist < 20) {
+                if (Math.random() > 0.95) p.q = Math.floor(Math.random() * N);
                 else {
-                    if (Math.random()>0.99) p.D *= -1;
+                    if (Math.random() > 0.99) p.D *= -1;
                     p.q = (p.q + p.D + N) % N;
                 }
             }
 
-            p.vx += -dx/dist * p.speed;
-            p.vy += -dy/dist * p.speed;
+            p.vx += -dx / dist * p.speed;
+            p.vy += -dy / dist * p.speed;
 
             p.trace[0].x += p.vx;
             p.trace[0].y += p.vy;
@@ -281,58 +279,57 @@ function init(){
             p.vx *= p.force;
             p.vy *= p.force;
 
-            for (let k=1;k<p.trace.length;k++){
-                p.trace[k].x -= 0.4*(p.trace[k].x - p.trace[0].x);
-                p.trace[k].y -= 0.4*(p.trace[k].y - p.trace[0].y);
+            for (let k = 1; k < p.trace.length; k++) {
+                p.trace[k].x -= 0.4 * (p.trace[k].x - p.trace[0].x);
+                p.trace[k].y -= 0.4 * (p.trace[k].y - p.trace[0].y);
             }
 
-            for(let k=0;k<p.trace.length;k++){
+            for (let k = 0; k < p.trace.length; k++) {
                 let t = p.trace[k];
-                ctx.drawImage(p.img, t.x-8, t.y-8, 16, 16);
+                ctx.drawImage(p.img, t.x - 8, t.y - 8, 16, 16);
             }
         }
 
-        /* ========== ẢNH LỚN TRONG TIM ========== */
-        if (bigReady){
+        // Trái tim lớn
+        if (bigReady) {
             if (opacityBig < 1) opacityBig += 0.02;
 
             ctx.save();
             ctx.globalAlpha = opacityBig;
 
-            let beat = 1 + Math.sin(time*2) * 0.1;
-            let baseSize = Math.min(W,H)*0.15;
+            let beat = 1 + Math.sin(time * 2) * 0.1;
+            let baseSize = Math.min(W, H) * 0.15;
             let S = baseSize * beat;
 
-            heartPath(ctx, W/2, H/2, S);
+            heartPath(ctx, W / 2, H / 2, S);
             ctx.clip();
-
-            ctx.drawImage(bigImg, W/2 - S, H/2 - S, S*2, S*2);
-
+            ctx.drawImage(bigImg, W / 2 - S, H / 2 - S, S * 2, S * 2);
             ctx.restore();
         }
 
-        /* ========== TÊN + LỜI CHÚC ========== */
+        /* ================== TEXT ================== */
         ctx.save();
 
+        // TÊN
         ctx.font = "48px 'Great Vibes'";
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
 
-        let glow = 10 + Math.sin(time*3)*6;
+        let glow = 10 + Math.sin(time * 3) * 6;
         ctx.shadowColor = "rgba(255,50,150,0.9)";
         ctx.shadowBlur = glow;
 
-        let nameY = H/2 + (Math.min(W,H)*0.30);
-        ctx.fillText("Lê Thị Thu Hằng", W/2, nameY);
+        let nameY = H / 2 + (Math.min(W, H) * 0.30);
+        ctx.fillText("Lê Thị Thu Hằng", W / 2, nameY);
 
-        /* LỜI CHÚC NHIỀU DÒNG */
+        // LỜI CHÚC GÕ CHỮ
         ctx.font = "28px 'Great Vibes'";
         ctx.shadowBlur = 0;
 
         const messages = [
             "Chúc em luôn xinh đẹp và rạng rỡ như hôm nay ♥",
             "Chúc em lúc nào cũng tràn niềm vui và hạnh phúc.",
-            "Mong hai chúng ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
+            "Mong hai ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
             "Cùng ở bên nhau thật lâu nhé cô giáo nhỏ của a ạ ♥"
         ];
 
@@ -355,9 +352,8 @@ function init(){
                 window._typeIndex = 0;
                 window._lineIndex++;
 
-                if (window._lineIndex >= messages.length) {
+                if (window._lineIndex >= messages.length)
                     window._lineIndex = 0;
-                }
             }
         } else {
             if (window._typeTimer > typingSpeed) {
@@ -367,7 +363,7 @@ function init(){
         }
 
         let visible = currentLine.substring(0, window._typeIndex);
-        ctx.fillText(visible, W/2, nameY + 55);
+        ctx.fillText(visible, W / 2, nameY + 55);
 
         ctx.restore();
 
@@ -376,7 +372,6 @@ function init(){
 
     loop();
 }
-
 </script>
 
 </body>
