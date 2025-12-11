@@ -151,17 +151,37 @@ function init() {
     const canvas = document.getElementById("heart");
     const ctx = canvas.getContext("2d");
 
-    canvas.width = innerWidth;
-    canvas.height = innerHeight;
-
-    let W = canvas.width;
-    let H = canvas.height;
+    // ===========================================
+    // BỔ SUNG: Xử lý Device Pixel Ratio
+    // ===========================================
+    const dpr = window.devicePixelRatio || 1;
+    
+    let W = innerWidth;
+    let H = innerHeight;
+    
+    // Đặt kích thước vật lý của canvas (độ phân giải thực)
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    
+    // Đặt kích thước hiển thị của canvas (CSS)
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    
+    // Tăng tỷ lệ cho mọi thao tác vẽ để khớp với độ phân giải vật lý
+    ctx.scale(dpr, dpr);
+    // ===========================================
 
     window.onresize = () => {
-        canvas.width = innerWidth;
-        canvas.height = innerHeight;
-        W = canvas.width;
-        H = canvas.height;
+        // Cập nhật lại kích thước khi resize
+        W = innerWidth;
+        H = innerHeight;
+        
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        
+        ctx.scale(dpr, dpr);
     };
 
     /* ============ HEART PATH ============== */
