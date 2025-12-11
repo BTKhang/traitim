@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Heart Animation With Password</title>
+
+    <style>
+        body { margin: 0; background: #000; }
+
+        canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none; /* ẨN CANVAS CHO ĐẾN KHI NHẬP ĐÚNG MẬT KHẨU */
+        }
+
+        /* BOX MẬT KHẨU */
+        #loginBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255,0,150,0.7);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        #loginBox input {
+            padding: 10px 15px;
+            width: 220px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        #loginBox button {
+            margin-top: 15px;
+            padding: 10px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: #ff4fa6;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #wrongPass {
+            margin-top: 10px;
+            color: #ff8080;
+            font-size: 17px;
+            display: none;
+        }
+    </style>
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="loginBox">
+    <h2 style="color:white; font-family: 'Great Vibes'; font-size:42px;">
+        Nhập mật khẩu đi emmm
+    </h2>
+    <input type="password" id="passInput" placeholder="••••••">
+    <br>
+    <button onclick="checkPass()">OK</button>
+    <div id="wrongPass">Sai mật khẩu!</div>
+</div>
+
+<canvas id="heart"></canvas>
+
+<script>
+const PASSWORD = "161227";   
+
+function checkPass() {
+    const input = document.getElementById("passInput").value;
+    const wrong = document.getElementById("wrongPass");
+
+    if (input === PASSWORD) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("heart").style.display = "block";
+
+        init();
+    } else {
+        wrong.style.display = "block";
+    }
+}
+const smallImgs = [];
+for (let i = 1; i <= 10; i++) {
+    const img = new Image();
+    img.src = "small" + i + ".png";
+    smallImgs.push(img);
+}
+
+// dùng ảnh nhỏ làm ảnh lớn luôn
+let bigImg = smallImgs[0];
+let bigReady = false;
+
+// kiểm tra tất cả ảnh nhỏ load xong
+let loadedCount = 0;
+smallImgs.forEach(img=>{
+    img.onload = ()=>{
+        loadedCount++;
+        if (loadedCount === smallImgs.length) bigReady = true;
+    };
+});
+
+// đổi ảnh lớn mỗi 2s
+setInterval(()=>{
+    bigImg = smallImgs[Math.floor(Math.random()*smallImgs.length)];
+}, 2000);
+
+// ----------------------------------------------------
+window.requestAnimationFrame =
+window.requestAnimationFrame ||
+function(cb){ return setTimeout(cb, 33); };
+
+let loaded = false;
+
+function init(){
+    if (loaded) return;
+    loaded = true;
+
+    const canvas = document.getElementById("heart");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+
+    let W = canvas.width;
+    let H = canvas.height;
+
+    window.onresize = ()=>{
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+        W = canvas.width;
+        H = canvas.height;
+    };
+
+    // ---------------- HEART MATH ---------------------
+    function heart(rad) {
+        return [
+            Math.pow(Math.sin(rad),3),
+            -(15*Math.cos(rad)-5*Math.cos(2*rad)-2*Math.cos(3*rad)-Math.cos(4*rad))
+        ];
+    }
+
+    function scale(p, sx, sy, dx, dy){
+        return [ dx + p[0]*sx, dy + p[1]*sy ];
+    }
+
+    let pts = [];
+
+    // 3 vòng hạt nhỏ
+    for(let r=0; r<Math.PI*2; r+=0.1)
+        pts.push(scale(heart(r), 210, 15, 0, 0));
+
+    for(let r=0; r<Math.PI*2; r+=0.1)
+        pts.push(scale(heart(r), 150, 10, 0, 0));
+
+    for(let r=0; r<Math.PI*2; r+=0.1)
+        pts.push(scale(heart(r), 90, 6, 0, 0));
+
+    let N = pts.length;
+    let target = [];
+
+    function pulse(kx,ky){
+        for (let i=0;i<N;i++){
+            target[i] = [
+                pts[i][0]*kx + W/2,
+                pts[i][1]*ky + H/2
+            ];
+        }
+    }
+
+    // ---------------- PARTICLES ---------------------
+    let particles = [];
+
+    for(let i=0;i<N;i++){
+        let x = Math.random()*W;
+        let y = Math.random()*H;
+
+        let t = [];
+        for(let k=0;k<40;k++) t.push({x:x, y:y});
+
+        particles[i] = {
+            vx:0, vy:0,
+            speed: Math.random()*1+5,
+            q: Math.floor(Math.random()*N),
+            D: Math.random()<0.5 ? -1 : 1,
+            force: 0.7 + Math.random()*0.3,
+            trace:t,
+            img: smallImgs[Math.floor(Math.random()*smallImgs.length)]
+        };
+    }
+
+    function heartPath(ctx, cx, cy, size) {
+        ctx.beginPath();
+        const steps = 200;
+        for (let i=0; i<=steps; i++) {
+            let t = (Math.PI * 2)*(i/steps);
+            let x = 16*Math.pow(Math.sin(t),3);
+            let y = -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+
+            x = cx + x*(size/17);
+            y = cy + y*(size/17);
+
+            if (i===0) ctx.moveTo(x,y);
+            else ctx.lineTo(x,y);
+        }
+        ctx.closePath();
+    }
+
+    let opacityBig = 0;
+    let time = 0;
+
+    function loop(){
+
+        time += 0.01;
+        let K = (1 - Math.cos(time))*0.5;
+        pulse(K,K);
+
+        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        ctx.fillRect(0,0,W,H);
+
+        // ======== HẠT NHỎ ========
+        for(let i=0;i<N;i++){
+            let p = particles[i];
+            let tg = target[p.q];
+
+            let dx = p.trace[0].x - tg[0];
+            let dy = p.trace[0].y - tg[1];
+            let dist = Math.sqrt(dx*dx+dy*dy)+0.001;
+
+            if (dist < 20){
+                if (Math.random()>0.95) p.q = Math.floor(Math.random()*N);
+                else {
+                    if (Math.random()>0.99) p.D *= -1;
+                    p.q = (p.q + p.D + N) % N;
+                }
+            }
+
+            p.vx += -dx/dist * p.speed;
+            p.vy += -dy/dist * p.speed;
+
+            p.trace[0].x += p.vx;
+            p.trace[0].y += p.vy;
+
+            p.vx *= p.force;
+            p.vy *= p.force;
+
+            for (let k=1;k<p.trace.length;k++){
+                p.trace[k].x -= 0.4*(p.trace[k].x - p.trace[0].x);
+                p.trace[k].y -= 0.4*(p.trace[k].y - p.trace[0].y);
+            }
+
+            for(let k=0;k<p.trace.length;k++){
+                let t = p.trace[k];
+                ctx.drawImage(p.img, t.x-8, t.y-8, 16, 16);
+            }
+        }
+
+        if (bigReady){
+            if (opacityBig < 1) opacityBig += 0.02;
+
+            ctx.save();
+            ctx.globalAlpha = opacityBig;
+
+            let beat = 1 + Math.sin(time*2) * 0.1;
+            let baseSize = Math.min(W,H)*0.15;
+            let S = baseSize * beat;
+
+            heartPath(ctx, W/2, H/2, S);
+            ctx.clip();
+
+            ctx.drawImage(bigImg, W/2 - S, H/2 - S, S*2, S*2);
+
+            ctx.restore();
+        }
+
+        // ================= TEXT: TÊN + LỜI CHÚC =================
+ctx.save();
+
+// ------------------- TÊN ----------------------
+ctx.font = "48px 'Great Vibes'";
+ctx.fillStyle = "white";
+ctx.textAlign = "center";
+
+let glow = 10 + Math.sin(time*3)*6;
+ctx.shadowColor = "rgba(255,50,150,0.9)";
+ctx.shadowBlur = glow;
+
+let nameY = H/2 + (Math.min(W,H)*0.30);
+ctx.fillText("Lê Thị Thu Hằng", W/2, nameY);
+
+// =============== GÕ CHỮ TỪNG DÒNG ===============
+ctx.font = "28px 'Great Vibes'";
+ctx.shadowBlur = 0;
+
+// DANH SÁCH CÁC DÒNG LỜI CHÚC
+const messages = [
+    "Chúc em luôn xinh đẹp và rạng rỡ như hôm nay ♥",
+    "Chúc em lúc nào cũng tràn niềm vui và hạnh phúc.",
+    "Mong hai chúng ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
+    "Cùng ở bên nhau thật lâu nhé cô giáo nhỏ của a ạ ♥"
+];
+
+// tốc độ gõ
+const typingSpeed = 0.5;
+
+// tạo biến chỉ 1 lần
+if (!window._lineIndex) window._lineIndex = 0;     // dòng hiện tại
+if (!window._typeIndex) window._typeIndex = 0;     // ký tự hiện tại trong dòng
+if (!window._typeTimer) window._typeTimer = 0;     // thời gian delay
+if (!window._lineDoneTimer) window._lineDoneTimer = 0; // thời gian chờ giữa 2 dòng
+
+let currentLine = messages[window._lineIndex];
+
+// tăng timer
+window._typeTimer += 0.1;
+
+// Khi gõ xong cả dòng → chờ 1.5s rồi sang dòng tiếp
+if (window._typeIndex >= currentLine.length) {
+    window._lineDoneTimer += 0.1;
+
+    if (window._lineDoneTimer > 15) { // 15 = 1.5 giây
+        window._lineDoneTimer = 0;
+        window._typeIndex = 0;
+        window._lineIndex++;
+
+        // hết dòng → quay về dòng đầu
+        if (window._lineIndex >= messages.length) {
+            window._lineIndex = 0;
+        }
+    }
+} else {
+    // đang gõ
+    if (window._typeTimer > typingSpeed) {
+        window._typeTimer = 0;
+        window._typeIndex++;
+    }
+}
+
+// hiển thị phần đã gõ
+let visible = currentLine.substring(0, window._typeIndex);
+ctx.fillText(visible, W/2, nameY + 55);
+
+ctx.restore();
+
+
+        requestAnimationFrame(loop);
+    }
+
+    loop();
+}
+
+</script>
+
+</body>
+</html>
