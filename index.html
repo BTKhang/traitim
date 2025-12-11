@@ -5,13 +5,21 @@
     <title>Heart Animation With Password</title>
 
     <style>
-        body { margin: 0; background: #000; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
 
         canvas {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            display: none; /* ẨN CANVAS CHO ĐẾN KHI NHẬP ĐÚNG MẬT KHẨU */
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            touch-action: none;
         }
 
         /* BOX MẬT KHẨU */
@@ -56,8 +64,24 @@
             font-size: 17px;
             display: none;
         }
-    </style>
 
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 600px) {
+            #loginBox {
+                width: 80%;
+                padding: 20px;
+            }
+
+            #loginBox input {
+                width: 150px;
+                font-size: 16px;
+            }
+
+            #loginBox h2 {
+                font-size: 32px !important;
+            }
+        }
+    </style>
 
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 </head>
@@ -76,7 +100,7 @@
 <canvas id="heart"></canvas>
 
 <script>
-const PASSWORD = "161227";   
+const PASSWORD = "161227";
 
 function checkPass() {
     const input = document.getElementById("passInput").value;
@@ -85,12 +109,13 @@ function checkPass() {
     if (input === PASSWORD) {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("heart").style.display = "block";
-
         init();
     } else {
         wrong.style.display = "block";
     }
 }
+
+/* LOAD ẢNH NHỎ */
 const smallImgs = [];
 for (let i = 1; i <= 10; i++) {
     const img = new Image();
@@ -98,11 +123,9 @@ for (let i = 1; i <= 10; i++) {
     smallImgs.push(img);
 }
 
-// dùng ảnh nhỏ làm ảnh lớn luôn
 let bigImg = smallImgs[0];
 let bigReady = false;
 
-// kiểm tra tất cả ảnh nhỏ load xong
 let loadedCount = 0;
 smallImgs.forEach(img=>{
     img.onload = ()=>{
@@ -111,39 +134,45 @@ smallImgs.forEach(img=>{
     };
 });
 
-// đổi ảnh lớn mỗi 2s
+/* ĐỔI ẢNH LỚN MỖI 2 GIÂY */
 setInterval(()=>{
     bigImg = smallImgs[Math.floor(Math.random()*smallImgs.length)];
 }, 2000);
 
-// ----------------------------------------------------
+/* REQUEST ANIMATION */
 window.requestAnimationFrame =
 window.requestAnimationFrame ||
 function(cb){ return setTimeout(cb, 33); };
 
 let loaded = false;
 
+/* ========== KHỞI TẠO ========== */
 function init(){
     if (loaded) return;
     loaded = true;
 
     const canvas = document.getElementById("heart");
-    const ctx = canvas.getContext("2d");
+    window.ctx = canvas.getContext("2d");
 
-    canvas.width = innerWidth;
-    canvas.height = innerHeight;
+    function resizeCanvas() {
+        const ratio = window.devicePixelRatio || 1;
 
-    let W = canvas.width;
-    let H = canvas.height;
+        canvas.width = innerWidth * ratio;
+        canvas.height = innerHeight * ratio;
 
-    window.onresize = ()=>{
-        canvas.width = innerWidth;
-        canvas.height = innerHeight;
-        W = canvas.width;
-        H = canvas.height;
-    };
+        canvas.style.width = innerWidth + "px";
+        canvas.style.height = innerHeight + "px";
 
-    // ---------------- HEART MATH ---------------------
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+        window.W = innerWidth;
+        window.H = innerHeight;
+    }
+
+    window.onresize = resizeCanvas;
+    resizeCanvas();
+
+    /* ========== HEART MATH ========== */
     function heart(rad) {
         return [
             Math.pow(Math.sin(rad),3),
@@ -156,14 +185,10 @@ function init(){
     }
 
     let pts = [];
-
-    // 3 vòng hạt nhỏ
     for(let r=0; r<Math.PI*2; r+=0.1)
         pts.push(scale(heart(r), 210, 15, 0, 0));
-
     for(let r=0; r<Math.PI*2; r+=0.1)
         pts.push(scale(heart(r), 150, 10, 0, 0));
-
     for(let r=0; r<Math.PI*2; r+=0.1)
         pts.push(scale(heart(r), 90, 6, 0, 0));
 
@@ -179,7 +204,7 @@ function init(){
         }
     }
 
-    // ---------------- PARTICLES ---------------------
+    /* ========== PARTICLES ========== */
     let particles = [];
 
     for(let i=0;i<N;i++){
@@ -220,6 +245,7 @@ function init(){
     let opacityBig = 0;
     let time = 0;
 
+    /* ========== LOOP ========== */
     function loop(){
 
         time += 0.01;
@@ -229,7 +255,7 @@ function init(){
         ctx.fillStyle = "rgba(0,0,0,0.15)";
         ctx.fillRect(0,0,W,H);
 
-        // ======== HẠT NHỎ ========
+        /* PARTICLES */
         for(let i=0;i<N;i++){
             let p = particles[i];
             let tg = target[p.q];
@@ -266,6 +292,7 @@ function init(){
             }
         }
 
+        /* ========== ẢNH LỚN TRONG TIM ========== */
         if (bigReady){
             if (opacityBig < 1) opacityBig += 0.02;
 
@@ -284,75 +311,65 @@ function init(){
             ctx.restore();
         }
 
-        // ================= TEXT: TÊN + LỜI CHÚC =================
-ctx.save();
+        /* ========== TÊN + LỜI CHÚC ========== */
+        ctx.save();
 
-// ------------------- TÊN ----------------------
-ctx.font = "48px 'Great Vibes'";
-ctx.fillStyle = "white";
-ctx.textAlign = "center";
+        ctx.font = "48px 'Great Vibes'";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
 
-let glow = 10 + Math.sin(time*3)*6;
-ctx.shadowColor = "rgba(255,50,150,0.9)";
-ctx.shadowBlur = glow;
+        let glow = 10 + Math.sin(time*3)*6;
+        ctx.shadowColor = "rgba(255,50,150,0.9)";
+        ctx.shadowBlur = glow;
 
-let nameY = H/2 + (Math.min(W,H)*0.30);
-ctx.fillText("Lê Thị Thu Hằng", W/2, nameY);
+        let nameY = H/2 + (Math.min(W,H)*0.30);
+        ctx.fillText("Lê Thị Thu Hằng", W/2, nameY);
 
-// =============== GÕ CHỮ TỪNG DÒNG ===============
-ctx.font = "28px 'Great Vibes'";
-ctx.shadowBlur = 0;
+        /* LỜI CHÚC NHIỀU DÒNG */
+        ctx.font = "28px 'Great Vibes'";
+        ctx.shadowBlur = 0;
 
-// DANH SÁCH CÁC DÒNG LỜI CHÚC
-const messages = [
-    "Chúc em luôn xinh đẹp và rạng rỡ như hôm nay ♥",
-    "Chúc em lúc nào cũng tràn niềm vui và hạnh phúc.",
-    "Mong hai chúng ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
-    "Cùng ở bên nhau thật lâu nhé cô giáo nhỏ của a ạ ♥"
-];
+        const messages = [
+            "Chúc em luôn xinh đẹp và rạng rỡ như hôm nay ♥",
+            "Chúc em lúc nào cũng tràn niềm vui và hạnh phúc.",
+            "Mong hai chúng ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
+            "Cùng ở bên nhau thật lâu nhé cô giáo nhỏ của a ạ ♥"
+        ];
 
-// tốc độ gõ
-const typingSpeed = 0.5;
+        const typingSpeed = 0.5;
 
-// tạo biến chỉ 1 lần
-if (!window._lineIndex) window._lineIndex = 0;     // dòng hiện tại
-if (!window._typeIndex) window._typeIndex = 0;     // ký tự hiện tại trong dòng
-if (!window._typeTimer) window._typeTimer = 0;     // thời gian delay
-if (!window._lineDoneTimer) window._lineDoneTimer = 0; // thời gian chờ giữa 2 dòng
+        if (!window._lineIndex) window._lineIndex = 0;
+        if (!window._typeIndex) window._typeIndex = 0;
+        if (!window._typeTimer) window._typeTimer = 0;
+        if (!window._lineDoneTimer) window._lineDoneTimer = 0;
 
-let currentLine = messages[window._lineIndex];
+        let currentLine = messages[window._lineIndex];
 
-// tăng timer
-window._typeTimer += 0.1;
+        window._typeTimer += 0.1;
 
-// Khi gõ xong cả dòng → chờ 1.5s rồi sang dòng tiếp
-if (window._typeIndex >= currentLine.length) {
-    window._lineDoneTimer += 0.1;
+        if (window._typeIndex >= currentLine.length) {
+            window._lineDoneTimer += 0.1;
 
-    if (window._lineDoneTimer > 15) { // 15 = 1.5 giây
-        window._lineDoneTimer = 0;
-        window._typeIndex = 0;
-        window._lineIndex++;
+            if (window._lineDoneTimer > 15) {
+                window._lineDoneTimer = 0;
+                window._typeIndex = 0;
+                window._lineIndex++;
 
-        // hết dòng → quay về dòng đầu
-        if (window._lineIndex >= messages.length) {
-            window._lineIndex = 0;
+                if (window._lineIndex >= messages.length) {
+                    window._lineIndex = 0;
+                }
+            }
+        } else {
+            if (window._typeTimer > typingSpeed) {
+                window._typeTimer = 0;
+                window._typeIndex++;
+            }
         }
-    }
-} else {
-    // đang gõ
-    if (window._typeTimer > typingSpeed) {
-        window._typeTimer = 0;
-        window._typeIndex++;
-    }
-}
 
-// hiển thị phần đã gõ
-let visible = currentLine.substring(0, window._typeIndex);
-ctx.fillText(visible, W/2, nameY + 55);
+        let visible = currentLine.substring(0, window._typeIndex);
+        ctx.fillText(visible, W/2, nameY + 55);
 
-ctx.restore();
-
+        ctx.restore();
 
         requestAnimationFrame(loop);
     }
