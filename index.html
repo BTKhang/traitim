@@ -114,7 +114,9 @@ function checkPass() {
 const smallImgs = [];
 for (let i = 1; i <= 10; i++) {
     const img = new Image();
-    img.src = "small" + i + ".png";
+    // Vui lòng đảm bảo các ảnh "small1.png" đến "small10.png" đã được tải lên cùng thư mục
+    // Nếu bạn muốn dùng ảnh mặc định: img.src = "https://via.placeholder.com/24";
+    img.src = "small" + i + ".png"; 
     smallImgs.push(img);
 }
 
@@ -152,7 +154,7 @@ function init() {
     const ctx = canvas.getContext("2d");
 
     // ===========================================
-    // BỔ SUNG: Xử lý Device Pixel Ratio
+    // BỔ SUNG: Xử lý Device Pixel Ratio (Fix vỡ ảnh trên iPhone/Mobile)
     // ===========================================
     const dpr = window.devicePixelRatio || 1;
     
@@ -196,16 +198,18 @@ function init() {
         return [dx + p[0] * sx, dy + p[1] * sy];
     }
 
+    // Tinh chỉnh độ giãn (scale) để trái tim hiển thị đẹp hơn
     let pts = [];
+    const scaleFactor = W < 600 ? 0.7 : 1; // Giảm kích thước trái tim trên mobile
 
     for (let r = 0; r < Math.PI * 2; r += 0.1)
-        pts.push(scale(heart(r), 210, 15, 0, 0));
+        pts.push(scale(heart(r), 210 * scaleFactor, 15 * scaleFactor, 0, 0));
 
     for (let r = 0; r < Math.PI * 2; r += 0.1)
-        pts.push(scale(heart(r), 150, 10, 0, 0));
+        pts.push(scale(heart(r), 150 * scaleFactor, 10 * scaleFactor, 0, 0));
 
     for (let r = 0; r < Math.PI * 2; r += 0.1)
-        pts.push(scale(heart(r), 90, 6, 0, 0));
+        pts.push(scale(heart(r), 90 * scaleFactor, 6 * scaleFactor, 0, 0));
 
     let N = pts.length;
     let target = [];
@@ -213,8 +217,8 @@ function init() {
     function pulse(kx, ky) {
         for (let i = 0; i < N; i++) {
             target[i] = [
-                pts[i][0] * kx + W / 2,
-                pts[i][1] * ky + H / 2
+                pts[i][0] * kx + W / 2, // Căn giữa X
+                pts[i][1] * ky + H / 2 // Căn giữa Y
             ];
         }
     }
@@ -315,7 +319,8 @@ function init() {
             ctx.globalAlpha = opacityBig;
 
             let beat = 1 + Math.sin(time * 2) * 0.1;
-            let baseSize = Math.min(W, H) * 0.15;
+            // Tối ưu hóa kích thước trái tim trên mobile
+            let baseSize = W < 600 ? Math.min(W, H) * 0.25 : Math.min(W, H) * 0.15; 
             let S = baseSize * beat;
 
             heartPath(ctx, W / 2, H / 2, S);
@@ -337,7 +342,9 @@ function init() {
         ctx.shadowColor = "rgba(255,50,150,0.9)";
         ctx.shadowBlur = glow;
 
-        let nameY = H/2 + Math.min(W,H)*0.30;
+        // Tinh chỉnh vị trí Y để căn giữa tổng thể
+        let offsetY = W < 600 ? 100 : 150; // Khoảng cách từ tim đến tên trên mobile
+        let nameY = H/2 + offsetY;
         ctx.fillText("Lê Thị Thu Hằng", W/2, nameY);
 
         /* ====== LỜI CHÚC ======= */
@@ -347,7 +354,7 @@ function init() {
         const messages = [
     "Chúc em luôn xinh đẹp và rạng rỡ như hôm nay ♥",
     "Chúc em lúc nào cũng tràn niềm vui và hạnh phúc.",
-    "Mong hai chúng ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
+    "Mong hai ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
     "Cùng ở bên nhau thật lâu nhé cô giáo nhỏ của a ạ ♥"
         ];
 
@@ -381,8 +388,9 @@ function init() {
         }
 
         let visible = currentLine.substring(0, window._typeIndex);
-
-        ctx.fillText(visible, W/2, nameY + 55);
+        
+        // Vị trí lời chúc nằm ngay dưới tên với khoảng cách nhỏ hơn
+        ctx.fillText(visible, W/2, nameY + (W < 600 ? 35 : 55)); 
 
         ctx.restore();
 
