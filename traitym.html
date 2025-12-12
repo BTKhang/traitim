@@ -2,9 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heart Animation With Password</title>
+    <title>Gửi emiu</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <style>
+        /* ... (Phần CSS giữ nguyên) ... */
         body { margin: 0; background: #000; overflow: hidden; }
 
         /* CANVAS nằm phía sau */
@@ -30,7 +33,7 @@
             box-shadow: 0 0 20px rgba(255,0,150,0.7);
             backdrop-filter: blur(10px);
             text-align: center;
-            z-index: 9999; /* QUAN TRỌNG: nằm trên cùng */
+            z-index: 9999;
         }
 
         #loginBox input {
@@ -65,15 +68,8 @@
         /* =================== MOBILE FIX ====================== */
         @media (max-width: 600px) {
             #loginBox { width: 80%; padding: 20px; }
-
             #loginBox input { width: 90%; font-size: 16px; }
-
             #loginBox button { font-size: 16px; }
-
-            .mobileText { font-size: 20px !important; }
-
-            .mobileName { font-size: 36px !important; }
-
             body { overflow: hidden; }
         }
     </style>
@@ -84,7 +80,7 @@
 
 <div id="loginBox">
     <h2 style="color:white; font-family: 'Great Vibes'; font-size:42px;">
-        Nhập mật khẩu đi emmm
+        eiu nhập mật khẩu đi ạ
     </h2>
     <input type="password" id="passInput" placeholder="••••••">
     <br>
@@ -94,16 +90,30 @@
 
 <canvas id="heart"></canvas>
 
+<audio id="backgroundMusic" loop preload="auto">
+    <source src="background_music.mp3" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ thẻ audio.
+</audio>
 <script>
 const PASSWORD = "161227";
 
 function checkPass() {
     const input = document.getElementById("passInput").value;
     const wrong = document.getElementById("wrongPass");
+    const music = document.getElementById("backgroundMusic"); // Lấy thẻ audio
 
     if (input === PASSWORD) {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("heart").style.display = "block";
+        
+        // ******************************************************
+        // PHÁT NHẠC
+        music.play().catch(error => {
+             // Thường xảy ra nếu tương tác người dùng chưa đủ rõ ràng
+             console.log("Lỗi phát nhạc:", error);
+        });
+        // ******************************************************
+        
         init();
     } else wrong.style.display = "block";
 }
@@ -114,8 +124,6 @@ function checkPass() {
 const smallImgs = [];
 for (let i = 1; i <= 10; i++) {
     const img = new Image();
-    // Vui lòng đảm bảo các ảnh "small1.png" đến "small10.png" đã được tải lên cùng thư mục
-    // Nếu bạn muốn dùng ảnh mặc định: img.src = "https://via.placeholder.com/24";
     img.src = "small" + i + ".png"; 
     smallImgs.push(img);
 }
@@ -153,9 +161,7 @@ function init() {
     const canvas = document.getElementById("heart");
     const ctx = canvas.getContext("2d");
 
-    // ===========================================
-    // BỔ SUNG: Xử lý Device Pixel Ratio (Fix vỡ ảnh trên iPhone/Mobile)
-    // ===========================================
+    // Xử lý Device Pixel Ratio (Fix vỡ ảnh trên iPhone/Mobile)
     const dpr = window.devicePixelRatio || 1;
     
     let W = innerWidth;
@@ -171,7 +177,6 @@ function init() {
     
     // Tăng tỷ lệ cho mọi thao tác vẽ để khớp với độ phân giải vật lý
     ctx.scale(dpr, dpr);
-    // ===========================================
 
     window.onresize = () => {
         // Cập nhật lại kích thước khi resize
@@ -198,9 +203,9 @@ function init() {
         return [dx + p[0] * sx, dy + p[1] * sy];
     }
 
-    // Tinh chỉnh độ giãn (scale) để trái tim hiển thị đẹp hơn
+    // Giữ nguyên scaleFactor như code gốc bạn cung cấp
     let pts = [];
-    const scaleFactor = W < 600 ? 0.7 : 1; // Giảm kích thước trái tim trên mobile
+    const scaleFactor = W < 600 ? 0.7 : 1; 
 
     for (let r = 0; r < Math.PI * 2; r += 0.1)
         pts.push(scale(heart(r), 210 * scaleFactor, 15 * scaleFactor, 0, 0));
@@ -217,14 +222,15 @@ function init() {
     function pulse(kx, ky) {
         for (let i = 0; i < N; i++) {
             target[i] = [
-                pts[i][0] * kx + W / 2, // Căn giữa X
-                pts[i][1] * ky + H / 2 // Căn giữa Y
+                pts[i][0] * kx + W / 2, 
+                pts[i][1] * ky + H / 2
             ];
         }
     }
 
     /* ============ PARTICLES ============== */
     let particles = [];
+    // ... (Phần logic hạt giữ nguyên)
 
     for (let i = 0; i < N; i++) {
         let x = Math.random() * W;
@@ -274,7 +280,7 @@ function init() {
         ctx.fillStyle = "rgba(0,0,0,0.18)";
         ctx.fillRect(0, 0, W, H);
 
-        /* ----- PARTICLES ----- */
+        /* ----- PARTICLES (Giữ nguyên) ----- */
         for (let i = 0; i < N; i++) {
             let p = particles[i];
             let tg = target[p.q];
@@ -319,8 +325,8 @@ function init() {
             ctx.globalAlpha = opacityBig;
 
             let beat = 1 + Math.sin(time * 2) * 0.1;
-            // Tối ưu hóa kích thước trái tim trên mobile
-            let baseSize = W < 600 ? Math.min(W, H) * 0.25 : Math.min(W, H) * 0.15; 
+            // Giữ nguyên baseSize như code gốc bạn cung cấp
+            let baseSize = Math.min(W, H) * 0.15; 
             let S = baseSize * beat;
 
             heartPath(ctx, W / 2, H / 2, S);
@@ -342,9 +348,8 @@ function init() {
         ctx.shadowColor = "rgba(255,50,150,0.9)";
         ctx.shadowBlur = glow;
 
-        // Tinh chỉnh vị trí Y để căn giữa tổng thể
-        let offsetY = W < 600 ? 100 : 150; // Khoảng cách từ tim đến tên trên mobile
-        let nameY = H/2 + offsetY;
+        // Giữ nguyên logic tính toán vị trí tên
+        let nameY = H/2 + Math.min(W,H)*0.30; 
         ctx.fillText("Lê Thị Thu Hằng", W/2, nameY);
 
         /* ====== LỜI CHÚC ======= */
@@ -352,10 +357,10 @@ function init() {
         ctx.shadowBlur = 0;
 
         const messages = [
-    "Chúc em luôn xinh đẹp và rạng rỡ như hôm nay ♥",
-    "Chúc em lúc nào cũng tràn niềm vui và hạnh phúc.",
-    "Mong hai ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
-    "Cùng ở bên nhau thật lâu nhé cô giáo nhỏ của a ạ ♥"
+            "Chúc em luôn xinh đẹp và rạng rỡ như hôm nay ♥",
+            "Chúc em lúc nào cũng tràn niềm vui và hạnh phúc.",
+            "Mong hai ta trải qua bao khó khăn cũng luôn chọn bên nhau.",
+            "Cùng ở bên nhau thật lâu nhé cô giáo nhỏ của a ạ ♥"
         ];
 
         const typingSpeed = 0.5;
@@ -390,7 +395,7 @@ function init() {
         let visible = currentLine.substring(0, window._typeIndex);
         
         // Vị trí lời chúc nằm ngay dưới tên với khoảng cách nhỏ hơn
-        ctx.fillText(visible, W/2, nameY + (W < 600 ? 35 : 55)); 
+        ctx.fillText(visible, W/2, nameY + 55); 
 
         ctx.restore();
 
