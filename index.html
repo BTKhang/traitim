@@ -5,7 +5,9 @@
     <title>Gửi emiu</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <style>
+        /* ... (Phần CSS giữ nguyên) ... */
         body { margin: 0; background: #000; overflow: hidden; }
 
         /* CANVAS nằm phía sau */
@@ -88,16 +90,30 @@
 
 <canvas id="heart"></canvas>
 
+<audio id="backgroundMusic" loop preload="auto">
+    <source src="background_music.mp3" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ thẻ audio.
+</audio>
 <script>
 const PASSWORD = "161227";
 
 function checkPass() {
     const input = document.getElementById("passInput").value;
     const wrong = document.getElementById("wrongPass");
+    const music = document.getElementById("backgroundMusic"); // Lấy thẻ audio
 
     if (input === PASSWORD) {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("heart").style.display = "block";
+        
+        // ******************************************************
+        // PHÁT NHẠC
+        music.play().catch(error => {
+             // Thường xảy ra nếu tương tác người dùng chưa đủ rõ ràng
+             console.log("Lỗi phát nhạc:", error);
+        });
+        // ******************************************************
+        
         init();
     } else wrong.style.display = "block";
 }
@@ -145,9 +161,7 @@ function init() {
     const canvas = document.getElementById("heart");
     const ctx = canvas.getContext("2d");
 
-    // ===========================================
-    // BỔ SUNG: Xử lý Device Pixel Ratio (Fix vỡ ảnh trên iPhone/Mobile)
-    // ===========================================
+    // Xử lý Device Pixel Ratio (Fix vỡ ảnh trên iPhone/Mobile)
     const dpr = window.devicePixelRatio || 1;
     
     let W = innerWidth;
@@ -163,7 +177,6 @@ function init() {
     
     // Tăng tỷ lệ cho mọi thao tác vẽ để khớp với độ phân giải vật lý
     ctx.scale(dpr, dpr);
-    // ===========================================
 
     window.onresize = () => {
         // Cập nhật lại kích thước khi resize
@@ -190,7 +203,7 @@ function init() {
         return [dx + p[0] * sx, dy + p[1] * sy];
     }
 
-    // KHÔI PHỤC: Giữ nguyên scaleFactor như code gốc bạn cung cấp
+    // Giữ nguyên scaleFactor như code gốc bạn cung cấp
     let pts = [];
     const scaleFactor = W < 600 ? 0.7 : 1; 
 
@@ -312,7 +325,7 @@ function init() {
             ctx.globalAlpha = opacityBig;
 
             let beat = 1 + Math.sin(time * 2) * 0.1;
-            // KHÔI PHỤC: Giữ nguyên baseSize như code gốc bạn cung cấp
+            // Giữ nguyên baseSize như code gốc bạn cung cấp
             let baseSize = Math.min(W, H) * 0.15; 
             let S = baseSize * beat;
 
@@ -335,7 +348,7 @@ function init() {
         ctx.shadowColor = "rgba(255,50,150,0.9)";
         ctx.shadowBlur = glow;
 
-        // KHÔI PHỤC: Giữ nguyên logic tính toán vị trí tên
+        // Giữ nguyên logic tính toán vị trí tên
         let nameY = H/2 + Math.min(W,H)*0.30; 
         ctx.fillText("Lê Thị Thu Hằng", W/2, nameY);
 
